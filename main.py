@@ -5,7 +5,7 @@ from sklearn.impute import IterativeImputer
 from sklearn.ensemble import ExtraTreesRegressor
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 def  exploratory_data_analysis(file_path, biomarkers):
     # opening the file
@@ -88,7 +88,7 @@ def cleaning_outliers(df, biomarkers):
 
 
 def normalizing(df, numeric_col):
-    scaler = StandardScaler()
+    scaler = MinMaxScaler()
     numeric_col.append('age')
     
     df[numeric_col] = scaler.fit_transform(df[numeric_col])
@@ -113,6 +113,7 @@ def pre_processing(df, biomarkers):
     df = normalizing(df, biomarkers)
     
     print(f'\n> Statistics:\n{df.describe(include='all').T}')
+    print(df)
     print('\n--------------------------------------------- DATA PRE-PROCESSING ---------------------------------------------')
     
     return df
@@ -120,7 +121,7 @@ def pre_processing(df, biomarkers):
     
     
 if __name__ == '__main__':
-    file_path = 'hcvdata/hcvdat0.csv'
+    file_path = 'hcvdata/hcvdata.csv'
     biomarkers = ['alb', 'alp', 'alt', 'ast', 'bil', 'che', 'chol', 'crea', 'cgt', 'prot']
     initial_dataframe = exploratory_data_analysis(file_path, biomarkers)
     cleaned_dataframe = pre_processing(initial_dataframe, biomarkers)
