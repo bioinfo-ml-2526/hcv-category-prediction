@@ -6,6 +6,10 @@ from sklearn.ensemble import ExtraTreesRegressor
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
 
 def  exploratory_data_analysis(file_path, biomarkers):
     # opening the file
@@ -18,7 +22,7 @@ def  exploratory_data_analysis(file_path, biomarkers):
     print(f'# Observations and features:\n{df.shape}')
     print(f'\n# Top 5 observations:\n{df.head()}')
     print(f'\n# Last 5 observations:\n{df.tail()}')
-    print(f'\n# Info about dataframe:')
+    print(f'\n# Info about the dataframe:')
     df.info()
     print(f'\n# Number of unique elements:\n{df.nunique()}')
     print(f'\n# Missing values: \n {df.isnull().sum()}')
@@ -31,9 +35,12 @@ def  exploratory_data_analysis(file_path, biomarkers):
 
 
 def encoding(df):
-    # one-hot enconding for sex and category columns
+    # one-hot enconding for sex column
     df = pd.get_dummies(df, columns=['sex'], prefix='sex', drop_first=True, dtype=int)
-    df = pd.get_dummies(df, columns=['category'], prefix='cat', drop_first=True, dtype=int)
+    
+    # one-hot enconding for category column
+    encoder = LabelEncoder()
+    df['category'] = encoder.fit_transform(df['category'])
     
     return df
 
@@ -113,10 +120,43 @@ def pre_processing(df, biomarkers):
     df = normalizing(df, biomarkers)
     
     print(f'\n> Statistics:\n{df.describe(include='all').T}')
+    int_columns = ['id', 'category', 'sex_m']
+    df[int_columns] = df[int_columns].astype(int)
     print(df)
     print('\n--------------------------------------------- DATA PRE-PROCESSING ---------------------------------------------')
     
     return df
+    
+    
+    
+def data_splitting(df):
+    X = df.drop(columns=['category'])
+    y = df['category']
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+    
+    return X_train, X_test, y_train, y_test
+    
+    
+    
+def logistic_regression_model(X_train, X_test, y_train, y_test):
+    lr = LogisticRegression()
+    lr.fit(X_train, y_train)
+    y_predictions = lr.predict(X_test)
+
+    print(f'\n# Logistic regression metrics report:')
+    print(classification_report(y_test, y_predictions))
+
+
+
+def random_forest_model(X_train, X_test, y_train, y_test):
+    rf = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf.fit(X_train, y_train)
+    y_predictions = rf.predict(X_test)
+    
+    print(f'\nAccuracy: {accuracy_score(y_test, y_predictions)}')
+    print(f'\n# Random forest metrics report:')
+    print(classification_report(y_test, y_predictions))
     
     
     
@@ -125,3 +165,6 @@ if __name__ == '__main__':
     biomarkers = ['alb', 'alp', 'alt', 'ast', 'bil', 'che', 'chol', 'crea', 'cgt', 'prot']
     initial_dataframe = exploratory_data_analysis(file_path, biomarkers)
     cleaned_dataframe = pre_processing(initial_dataframe, biomarkers)
+    X_train, X_test, y_train, y_test = data_splitting(cleaned_dataframe)
+    logistic_regression_model(X_train, X_test, y_train, y_test)
+    random_forest_model(X_train, X_test, y_train, y_test)
